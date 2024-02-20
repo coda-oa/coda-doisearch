@@ -2,12 +2,30 @@ from typing import Any, NamedTuple
 
 import httpx
 
-from coda.doisearch import _json
+from coda.doisearch import _json, __version__
 
 PRINT_PUB_PATH = ("published-print", "date-parts")
 ONLINE_PUB_PATH = ("published-online", "date-parts")
 
 WORKS_ENDPOINT = "https://api.crossref.org/works/"
+
+
+class SelfIdentification(NamedTuple):
+    app_name: str
+    app_version: str
+    app_url: str
+    mailto: str
+
+    def __str__(self) -> str:
+        return f"{self.app_name}/{self.app_version} ({self.app_url}; mailto: {self.mailto}) BasedOn: coda-doisearch/{__version__}"
+
+
+__IDENTITY__: SelfIdentification | None = None
+
+
+def identify(identity: SelfIdentification) -> None:
+    global __IDENTITY__
+    __IDENTITY__ = identity
 
 
 class DateParts(NamedTuple):
@@ -25,8 +43,17 @@ class Work(NamedTuple):
         return self.title
 
 
+def _build_headers() -> dict[str, str]:
+    if __IDENTITY__ is None:
+        return {}
+
+    return {
+        "User-Agent": str(__IDENTITY__),
+    }
+
+
 def work(doi: str) -> Work:
-    res = httpx.get(f"{WORKS_ENDPOINT}{doi}")
+    res = httpx.get(f"{WORKS_ENDPOINT}{doi}", headers=_build_headers())
     res.raise_for_status()
     message = res.json()["message"]
     return Work(
@@ -37,7 +64,9 @@ def work(doi: str) -> Work:
 
 
 def works(title: str | None = None, author: str | None = None) -> list[Work]:
-    res = httpx.get(WORKS_ENDPOINT, params=_prepare_query(title, author))
+    res = httpx.get(
+        WORKS_ENDPOINT, params=_prepare_query(title, author), headers=_build_headers()
+    )
     res.raise_for_status()
     return [
         Work(

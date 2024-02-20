@@ -2,12 +2,26 @@ import json
 from pathlib import Path
 from typing import Any, Iterable, cast
 
-from coda.doisearch import crossref
+from coda.doisearch import crossref, __version__
 
 DOI = "10.1371/journal.pcbi.1004668"
 TITLE = "A Quick Introduction to Version Control with Git and GitHub"
 WORK_RESPONSE = Path("tests/crossref_work_response.json")
 WORK_QUERY_RESPONSE = Path("tests/crossref_work_query_response.json")
+
+
+def test__crossref_self_identification__creates_identity_string() -> None:
+    identity = crossref.SelfIdentification(
+        app_name="test-app",
+        app_version="0.0.1",
+        app_url="https://example.com",
+        mailto="john.doe@example.com",
+    )
+
+    assert (
+        str(identity)
+        == f"test-app/0.0.1 (https://example.com; mailto: john.doe@example.com) BasedOn: coda-doisearch/{__version__}"
+    )
 
 
 def test__querying_crossref_work__returns_work() -> None:

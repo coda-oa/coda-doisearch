@@ -1,6 +1,6 @@
 [project]
 name = "coda-doisearch"
-version = "0.1.0"
+version = "0.2.0"
 description = "Searches DOI registrars for publications"
 authors = [
     {name = "Sven Marcus", email = "sven.marcus@tu-braunschweig.de"},
